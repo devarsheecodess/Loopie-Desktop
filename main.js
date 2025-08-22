@@ -4,8 +4,8 @@ require("electron-reload")(__dirname, {
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const { askGemini } = require("./gemini.js"); // ✅ import your Gemini helper
-const record = require("node-record-lpcm16"); // ✅ mic recording
+const { askGemini } = require("./gemini.js");
+const { spawn } = require('child_process');
 let win;
 
 function createWindow() {
@@ -17,6 +17,8 @@ function createWindow() {
 		transparent: true,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
+			nodeIntegration: false,
+			contextIsolation: true
 		},
 		resizable: true
 	});
@@ -24,7 +26,6 @@ function createWindow() {
 	win.loadFile("index.html");
 }
 
-// ✅ IPC handler to talk to Gemini
 ipcMain.handle("send-prompt", async (event, text) => {
 	try {
 		const reply = await askGemini(text);
@@ -35,40 +36,30 @@ ipcMain.handle("send-prompt", async (event, text) => {
 	}
 });
 
-const fs = require("fs");
-const filePath = path.join(__dirname, "recording.wav");
 
-ipcMain.handle("start-recording", async () => {
-	try {
-		console.log("🎤 Starting microphone recording...");
+ipcMain.handle('start-listen', async (event) => {
+	return new Promise((resolve, reject) => {
+		const pythonProcess = spawn('python', ['./speech-to-text/main.py']);
 
-		const file = fs.createWriteStream(filePath, { encoding: "binary" });
+		let result = '';
 
-		const rec = record.start({
-			sampleRate: 16000,
-			threshold: 0,
-			verbose: false,
-			recordProgram: process.platform === "win32" ? "sox" : "rec", // use sox on Windows
-			silence: "10.0", // auto stop after silence
+		pythonProcess.stdout.on('data', (data) => {
+			result += data.toString();
 		});
 
-		rec.pipe(file);
+		pythonProcess.stderr.on('data', (data) => {
+			console.error('Python error:', data.toString());
+		});
 
-		// stop after 5 sec for demo
-		setTimeout(() => {
-			record.stop();
-			console.log("🛑 Recording stopped. File saved at", filePath);
-		}, 5000);
-
-		return "🎤 Recording started, saving to recording.wav";
-	} catch (err) {
-		console.error("Mic error:", err);
-		return "⚠️ Error: Could not access microphone.";
-	}
+		pythonProcess.on('close', (code) => {
+			if (code === 0) {
+				resolve(result.trim());
+			} else {
+				reject(new Error(`Python process exited with code ${code}`));
+			}
+		});
+	});
 });
-
-app.commandLine.appendSwitch("enable-speech-dispatcher");
-app.commandLine.appendSwitch("enable-speech-recognition");
 
 app.whenReady().then(() => {
 	createWindow();
