@@ -7,34 +7,53 @@
 	<title>Overlay Application</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" href="style.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
-		integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
-		crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body class="bg-transparent w-full h-full font-sans">
 	<div class="flex flex-col mx-auto p-4 max-w-2xl h-full">
+
+		<!-- Top draggable bar -->
 		<div
 			class="flex justify-between items-center bg-black shadow-2xl backdrop-blur-xl mb-4 p-3 border border-white border-opacity-10 rounded-xl draggable">
+
+			<!-- Mic button -->
 			<button id="micButton"
 				class="flex justify-center items-center bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 rounded-full w-10 h-10 text-white hover:scale-110 transition-all duration-300 no-drag">
-				<i class="fa-solid fa-microphone"></i>
+				<svg id="micIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z">
+					</path>
+				</svg>
 			</button>
+
+			<!-- Input -->
 			<input type="text" id="textInput" placeholder="Ask me anything..."
 				class="flex-1 bg-white bg-opacity-10 mx-4 px-4 py-2 border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all duration-200 no-drag placeholder-gray-300" />
+
+			<!-- Other buttons -->
 			<div class="flex items-center space-x-2 no-drag">
 				<button
 					class="flex justify-center items-center bg-white bg-opacity-10 hover:bg-opacity-20 border border-white border-opacity-20 rounded-lg w-8 h-8 text-white transition-all hover:-translate-y-0.5 duration-200">
-					<i class="fa-solid fa-gear"></i>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+						</path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+					</svg>
 				</button>
 
 				<button id="closeButton"
 					class="flex justify-center items-center bg-red-500 bg-opacity-20 hover:bg-opacity-30 border border-red-400 border-opacity-30 rounded-lg w-8 h-8 text-red-400 transition-all hover:-translate-y-0.5 duration-200">
-					<i class="fa-solid fa-x"></i>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+						</path>
+					</svg>
 				</button>
 			</div>
 		</div>
 
+		<!-- Response area -->
 		<div class="flex-1 w-full min-h-0">
 			<div
 				class="bg-black bg-opacity-20 backdrop-blur-sm p-6 border border-white border-opacity-5 rounded-3xl h-full overflow-y-auto text-white text-opacity-90 scrollable-area">
@@ -43,6 +62,7 @@
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 	<script src="renderer.js"></script>

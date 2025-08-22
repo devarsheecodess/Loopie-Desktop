@@ -1,11 +1,12 @@
-require("electron-reload")(__dirname, {
-	electron: require(`${__dirname}/node_modules/electron`)
-});
+// require("electron-reload")(__dirname, {
+// 	electron: require(`${__dirname}/node_modules/electron`)
+// });
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const { askGemini } = require("./gemini.js");
+const { askGemini } = require("./config/gemini.js");
 const { spawn } = require('child_process');
+const fs = require('fs')
 let win;
 
 function createWindow() {
@@ -36,7 +37,6 @@ ipcMain.handle("send-prompt", async (event, text) => {
 	}
 });
 
-
 ipcMain.handle('start-listen', async (event) => {
 	return new Promise((resolve, reject) => {
 		const pythonProcess = spawn('python', ['./speech-to-text/main.py']);
@@ -63,4 +63,29 @@ ipcMain.handle('start-listen', async (event) => {
 
 app.whenReady().then(() => {
 	createWindow();
+});
+
+const screenshot = require('screenshot-desktop');
+ipcMain.handle('capture-screen', async () => {
+	try {
+		win.minimize();
+		const filePath = path.join(app.getPath('desktop'), 'screenshot.png');
+		await screenshot({ filename: filePath });
+		win.restore();
+		return filePath;
+	} catch (err) {
+		console.error(err);
+		throw err;
+	}
+});
+
+ipcMain.handle('delete-context', async () => {
+	try {
+		const contextFile = path.resolve(__dirname, '../geminiContext.json');
+		fs.unlinkSync(contextFile);
+		return { success: true };
+	} catch (err) {
+		console.error(err);
+		return { success: false, error: err.message };
+	}
 });

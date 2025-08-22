@@ -5,4 +5,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	startListen: () => ipcRenderer.invoke('start-listen'),
 	stopListen: () => ipcRenderer.invoke('stop-listen'),
 	onSpeechResult: (callback) => ipcRenderer.on('speech-result', (event, data) => callback(data)),
+	captureScreen: () => ipcRenderer.invoke('capture-screen'),
+	deleteContext: () => ipcRenderer.invoke('delete-context')
 });
