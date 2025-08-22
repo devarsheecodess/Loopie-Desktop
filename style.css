@@ -1,0 +1,35 @@
+/* Make only top bar draggable */
+.draggable {
+	-webkit-app-region: drag;
+}
+
+/* Make buttons, inputs, scroll area non-draggable */
+.no-drag {
+	-webkit-app-region: no-drag;
+	user-select: text;
+}
+
+/* Scrollbar stays non-draggable */
+.scrollable-area::-webkit-scrollbar {
+	-webkit-app-region: no-drag;
+}
+
+.scrollable-area::-webkit-scrollbar-thumb {
+	-webkit-app-region: no-drag;
+}
+
+.scrollable-area::-webkit-scrollbar-track {
+	-webkit-app-region: no-drag;
+}
+
+/* Body full size */
+body,
+html {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	overflow: hidden;
+	font-family: sans-serif;
+}

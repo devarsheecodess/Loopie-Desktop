@@ -1,0 +1,30 @@
+{
+	"name": "desktop-assistant",
+	"version": "1.0.0",
+	"description": "",
+	"main": "main.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "electron ."
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@google/genai": "^1.15.0",
+		"@google/generative-ai": "^0.24.1",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"dotenv": "^17.2.1",
+		"electron": "^37.3.1",
+		"lucide-react": "^0.541.0",
+		"mic": "^2.1.2",
+		"node-record-lpcm16": "^1.0.1",
+		"tailwind-merge": "^3.3.1",
+		"tw-animate-css": "^1.3.7",
+		"vosk": "^0.3.39"
+	},
+	"devDependencies": {
+		"electron-reload": "^2.0.0-alpha.1"
+	}
+}
