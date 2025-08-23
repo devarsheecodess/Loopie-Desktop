@@ -4,18 +4,15 @@
 	font-family: 'Poppins', sans-serif;
 }
 
-/* Make only top bar draggable */
 .draggable {
 	-webkit-app-region: drag;
 }
 
-/* Make buttons, inputs, scroll area non-draggable */
 .no-drag {
 	-webkit-app-region: no-drag;
 	user-select: text;
 }
 
-/* Scrollbar stays non-draggable */
 .scrollable-area::-webkit-scrollbar {
 	-webkit-app-region: no-drag;
 }
@@ -28,7 +25,6 @@
 	-webkit-app-region: no-drag;
 }
 
-/* Body full size */
 body,
 html {
 	margin: 0;

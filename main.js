@@ -3,7 +3,7 @@
 // });
 
 const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
-const { askGemini } = require("./config/gemini.js");
+const { askGemini, analyseImage } = require("./config/gemini.js");
 const screenshot = require('screenshot-desktop');
 const path = require("path");
 const fs = require('fs')
@@ -29,7 +29,10 @@ function createWindow() {
 
 	win.once('ready-to-show', () => {
 		const close = globalShortcut.register('Escape', () => {
-			if (win) win.close();
+			if (win) {
+				win.close();
+				fs.unlinkSync(path.resolve(__dirname, './geminiContext.json'));
+			}
 		});
 
 		const minimize = globalShortcut.register('Control+M', () => {
@@ -49,6 +52,16 @@ function createWindow() {
 ipcMain.handle("send-prompt", async (event, text) => {
 	try {
 		const reply = await askGemini(text, GEMINI_API_KEY);
+		return reply;
+	} catch (err) {
+		console.error("Gemini error:", err);
+		return "Error: Could not fetch response.";
+	}
+});
+
+ipcMain.handle("send-image", async (event, imgBuffer) => {
+	try {
+		const reply = await analyseImage(imgBuffer, GEMINI_API_KEY);
 		return reply;
 	} catch (err) {
 		console.error("Gemini error:", err);
@@ -87,4 +100,7 @@ ipcMain.on('set-gemini-key', (event, key) => {
 ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);
 
 app.whenReady().then(() => { createWindow(); });
-app.on('will-quit', () => { globalShortcut.unregisterAll(); });
+app.on('will-quit', () => {
+	globalShortcut.unregisterAll();
+	fs.unlinkSync(path.resolve(__dirname, './geminiContext.json'));
+});

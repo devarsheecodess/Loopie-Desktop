@@ -42,24 +42,15 @@ function removeTypingIndicator() {
 	}
 }
 
-textInput.addEventListener('keypress', async (e) => {
-	if (e.key === 'Enter' && textInput.value.trim()) {
-		const userMessage = textInput.value.trim();
-
-		addMessage('user', userMessage);
-		textInput.value = '';
-		showTypingIndicator();
-		try {
-			const reply = await window.electronAPI.sendPrompt(userMessage);
-			removeTypingIndicator();
-			addMessage('system', reply);
-		} catch (err) {
-			console.error('Error:', err);
-			removeTypingIndicator();
-			addMessage('system', 'Sorry, I encountered an error processing your request.');
-		}
+function arrayBufferToBase64(buffer) {
+	let binary = '';
+	const bytes = new Uint8Array(buffer);
+	const len = bytes.byteLength;
+	for (let i = 0; i < len; i++) {
+		binary += String.fromCharCode(bytes[i]);
 	}
-});
+	return btoa(binary);
+}
 
 function addMessage(sender, message, isListening = false, isLoader = false) {
 	if (placeholder) {
@@ -102,80 +93,12 @@ function addMessage(sender, message, isListening = false, isLoader = false) {
 	responseContent.scrollTop = responseContent.scrollHeight;
 }
 
-closeButton.addEventListener('click', () => {
-	window.close();
-});
-
-captureBtn.addEventListener('click', async () => {
-	try {
-		addMessage('user', 'Capturing screen...');
-		showTypingIndicator();
-		const filePath = await window.electronAPI.captureScreen();
-		const response = await fetch(`${BACKEND_URL}/analyse`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ path: filePath, apiKey: GEMINI_API_KEY }),
-		})
-		const data = await response.json();
-		addMessage('system', data.response);
-	} catch (err) {
-		console.error(err);
-		addMessage('system', data.response);
-		alert('Failed to capture screen');
-	} finally {
-		removeTypingIndicator();
-	}
-});
-
-settingsButton.addEventListener('click', () => {
-	isActive = !isActive;
-	if (isActive) {
-		settingsModal.classList.remove('hidden');
-		settingsButton.classList.add('-translate-y-0.5', 'bg-opacity-20');
-		geminiKeyInput.focus();
-	} else {
-		closeModal();
-	}
-});
-
-geminiKeyInput.addEventListener('input', (e) => {
-	e.stopPropagation();
-	const apiKey = e.target.value;
-	GEMINI_API_KEY = apiKey;
-	window.electronAPI.setGeminiKey(apiKey);
-	console.log('GEMINI_API_KEY updated:', apiKey);
-});
-
 function closeModal() {
 	settingsButton.classList.remove('-translate-y-0.5');
 	settingsButton.classList.remove('bg-opacity-20');
 	settingsModal.classList.add('hidden');
 	geminiKeyInput.value = '';
 }
-
-settingsModal.addEventListener('click', (e) => {
-	if (e.target === settingsModal) {
-		closeModal();
-	}
-});
-
-document.addEventListener('keydown', (e) => {
-	if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
-		closeModal();
-	}
-});
-
-settingsForm.addEventListener('submit', (e) => {
-	e.preventDefault();
-	const inputValue = geminiKeyInput.value.trim();
-
-	if (inputValue) {
-		console.log('Settings submitted:', inputValue);
-		closeModal();
-	}
-});
 
 async function toggleMic() {
 	const GROQ_API_KEY = groqKeyInput.value.trim();
@@ -256,6 +179,91 @@ async function toggleMic() {
 	}
 }
 
+textInput.addEventListener('keypress', async (e) => {
+	if (e.key === 'Enter' && textInput.value.trim()) {
+		const userMessage = textInput.value.trim();
+
+		addMessage('user', userMessage);
+		textInput.value = '';
+		showTypingIndicator();
+		try {
+			const reply = await window.electronAPI.sendPrompt(userMessage);
+			removeTypingIndicator();
+			addMessage('system', reply);
+		} catch (err) {
+			console.error('Error:', err);
+			removeTypingIndicator();
+			addMessage('system', 'Sorry, I encountered an error processing your request.');
+		}
+	}
+});
+
+closeButton.addEventListener('click', () => {
+	window.close();
+});
+
+captureBtn.addEventListener('click', async () => {
+	try {
+		addMessage('user', 'Capturing screen...');
+		showTypingIndicator();
+		const filePath = await window.electronAPI.captureScreen();
+
+		const imgBuffer = await fetch(filePath).then(res => res.arrayBuffer());
+
+		const base64Image = arrayBufferToBase64(imgBuffer);
+
+		const response = await window.electronAPI.analyseImage(base64Image);
+
+		addMessage('system', response);
+	} catch (err) {
+		console.error(err);
+		addMessage('system', err);
+		alert('Failed to capture screen');
+	} finally {
+		removeTypingIndicator();
+	}
+});
+
+settingsButton.addEventListener('click', () => {
+	isActive = !isActive;
+	if (isActive) {
+		settingsModal.classList.remove('hidden');
+		settingsButton.classList.add('-translate-y-0.5', 'bg-opacity-20');
+		geminiKeyInput.focus();
+	} else {
+		closeModal();
+	}
+});
+
+geminiKeyInput.addEventListener('input', (e) => {
+	e.stopPropagation();
+	const apiKey = e.target.value;
+	GEMINI_API_KEY = apiKey;
+	window.electronAPI.setGeminiKey(apiKey);
+	console.log('GEMINI_API_KEY updated:', apiKey);
+});
+
+settingsModal.addEventListener('click', (e) => {
+	if (e.target === settingsModal) {
+		closeModal();
+	}
+});
+
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+		closeModal();
+	}
+});
+
+settingsForm.addEventListener('submit', (e) => {
+	e.preventDefault();
+	const inputValue = geminiKeyInput.value.trim();
+
+	if (inputValue) {
+		console.log('Settings submitted:', inputValue);
+		closeModal();
+	}
+});
 
 micButton.addEventListener('click', toggleMic);
 modalCloseBtn.addEventListener('click', closeModal);

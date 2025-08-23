@@ -28,9 +28,7 @@ const askGemini = async (prompt, apiKey) => {
 
 	geminiContext.push({ role: 'user', text: prompt });
 
-	const ai = new GoogleGenAI({
-		apiKey,
-	});
+	const ai = new GoogleGenAI({ apiKey, });
 
 	const tools = [{ googleSearch: {} }];
 	const config = { thinkingConfig: { thinkingBudget: -1 }, tools };
@@ -56,12 +54,42 @@ const askGemini = async (prompt, apiKey) => {
 
 	saveContext();
 
-	if (geminiContext.length > 10) {
-		geminiContext = geminiContext.slice(-10);
-		saveContext();
-	}
-
 	return output.trim();
 };
 
-module.exports = { askGemini };
+const analyseImage = async (base64Image, apiKey) => {
+	if (!apiKey) {
+		return 'Error: GEMINI API key not set.';
+	}
+
+	const ai = new GoogleGenAI({ apiKey });
+
+	const contents = [
+		{
+			role: "user",
+			parts: [
+				{
+					inlineData: {
+						mimeType: "image/png",
+						data: base64Image,
+					},
+				},
+				{ text: "Describe this image." },
+			],
+		},
+	];
+
+	geminiContext.push({ role: 'user', text: `${base64Image} ${contents[0].parts[1].text}` });
+
+	const response = await ai.models.generateContent({
+		model: "gemini-2.5-flash",
+		contents,
+	});
+
+	geminiContext.push({ role: 'model', text: response.text.trim() }); ''
+	saveContext();
+
+	return response.text;
+};
+
+module.exports = { askGemini, analyseImage };

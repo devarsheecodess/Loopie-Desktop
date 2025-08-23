@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	deleteContext: () => ipcRenderer.invoke('delete-context'),
 	onSpeechResult: (callback) => ipcRenderer.on('speech-result', (event, data) => callback(data)),
 	setGeminiKey: (key) => ipcRenderer.send('set-gemini-key', key),
+	analyseImage: (imgPath) => ipcRenderer.invoke("send-image", imgPath),
 });
