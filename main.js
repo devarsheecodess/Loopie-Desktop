@@ -2,7 +2,7 @@
 // 	electron: require(`${__dirname}/node_modules/electron`)
 // });
 
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
 const { askGemini } = require("./config/gemini.js");
 const screenshot = require('screenshot-desktop');
 const path = require("path");
@@ -26,6 +26,24 @@ function createWindow() {
 	});
 
 	win.loadFile("index.html");
+
+	win.once('ready-to-show', () => {
+		const close = globalShortcut.register('Escape', () => {
+			if (win) win.close();
+		});
+
+		const minimize = globalShortcut.register('Control+M', () => {
+			if (win.isVisible()) {
+				win.hide();
+			} else {
+				win.show();
+			}
+		});
+
+		if (!close || !minimize) {
+			console.log('Shortcut registration failed');
+		}
+	});
 }
 
 ipcMain.handle("send-prompt", async (event, text) => {
@@ -69,3 +87,4 @@ ipcMain.on('set-gemini-key', (event, key) => {
 ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);
 
 app.whenReady().then(() => { createWindow(); });
+app.on('will-quit', () => { globalShortcut.unregisterAll(); });
