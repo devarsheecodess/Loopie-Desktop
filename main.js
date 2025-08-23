@@ -4,7 +4,6 @@
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const { askGemini } = require("./config/gemini.js");
-const { spawn } = require('child_process');
 const screenshot = require('screenshot-desktop');
 const path = require("path");
 const fs = require('fs')
@@ -35,44 +34,8 @@ ipcMain.handle("send-prompt", async (event, text) => {
 		return reply;
 	} catch (err) {
 		console.error("Gemini error:", err);
-		return "⚠️ Error: Could not fetch response.";
+		return "Error: Could not fetch response.";
 	}
-});
-
-ipcMain.handle('start-listen', async (event) => {
-	return new Promise((resolve, reject) => {
-		const pythonProcess = spawn('python', ['./speech-to-text/main.py']);
-
-		let result = '';
-
-		pythonProcess.stdout.on('data', (data) => {
-			result += data.toString();
-		});
-
-		pythonProcess.stderr.on('data', (data) => {
-			console.error('Python error:', data.toString());
-		});
-
-		pythonProcess.on('close', (code) => {
-			if (code === 0) {
-				const lines = result.trim().split('\n');
-				let micCommand = '';
-				let deviceCommand = '';
-
-				lines.forEach(line => {
-					if (line.toLowerCase().startsWith('microphone command:')) {
-						micCommand = line.substring('microphone command:'.length).trim();
-					} else if (line.toLowerCase().startsWith('device audio command:')) {
-						deviceCommand = line.substring('device audio command:'.length).trim();
-					}
-				});
-
-				resolve({ micCommand, deviceCommand });
-			} else {
-				reject(new Error(`Python process exited with code ${code}`));
-			}
-		});
-	});
 });
 
 ipcMain.handle('capture-screen', async () => {
@@ -101,7 +64,6 @@ ipcMain.handle('delete-context', async () => {
 
 ipcMain.on('set-gemini-key', (event, key) => {
 	GEMINI_API_KEY = key;
-	console.log('Updated GEMINI_API_KEY:', GEMINI_API_KEY);
 });
 
 ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);

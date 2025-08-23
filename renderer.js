@@ -10,10 +10,15 @@ const settingsModal = document.getElementById('settingsModal');
 const modalCloseBtn = document.getElementById('modalCloseBtn');
 const modalCancelBtn = document.getElementById('modalCancelBtn');
 const settingsForm = document.getElementById('settingsForm');
-const settingsInput = document.getElementById('settingsInput');
+const geminiKeyInput = document.getElementById('geminiKeyInput');
+const groqKeyInput = document.getElementById('groqKeyInput');
 const BACKEND_URL = "http://localhost:3000";
 let isActive = false;
 let GEMINI_API_KEY = '';
+let GROQ_API_KEY = '';
+let isRecording = false;
+let mediaRecorder;
+let audioChunks = [];
 
 function showTypingIndicator() {
 	const typingDiv = document.createElement('div');
@@ -56,13 +61,17 @@ textInput.addEventListener('keypress', async (e) => {
 	}
 });
 
-function addMessage(sender, message, isListening = false) {
+function addMessage(sender, message, isListening = false, isLoader = false) {
 	if (placeholder) {
 		placeholder.style.display = 'none';
 	}
 
 	const messageDiv = document.createElement('div');
 	messageDiv.classList.add('flex', 'mb-3');
+
+	if (isLoader) {
+		messageDiv.id = "transcribing-msg";
+	}
 
 	if (sender === 'user') {
 		messageDiv.classList.add('justify-end');
@@ -97,44 +106,6 @@ closeButton.addEventListener('click', () => {
 	window.close();
 });
 
-micButton.addEventListener('click', async () => {
-	micButton.classList.remove('bg-gradient-to-br', 'from-blue-500', 'to-blue-600');
-	micButton.classList.add('bg-gradient-to-br', 'from-red-500', 'to-red-600');
-	micButton.innerHTML = '<i class="fa-solid fa-circle"></i>';
-	micButton.style.boxShadow = '0 0 15px red';
-
-	try {
-		const transcriptionObj = await window.electronAPI.startListen();
-
-		const userMessage = transcriptionObj.micCommand?.trim() || '';
-
-		if (!userMessage) {
-			throw new Error('No transcription available');
-		}
-
-		removeTypingIndicator();
-		addMessage('user', userMessage);
-		showTypingIndicator();
-
-		try {
-			const reply = await window.electronAPI.sendPrompt(userMessage);
-			removeTypingIndicator();
-			addMessage('system', reply);
-		} catch (err) {
-			console.error('Error:', err);
-			removeTypingIndicator();
-			addMessage('system', 'Sorry, I encountered an error processing your request.');
-		}
-	} catch (err) {
-		responseContent.textContent = "Error occurred: " + err.message;
-	} finally {
-		micButton.classList.remove('bg-gradient-to-br', 'from-red-500', 'to-red-600');
-		micButton.classList.add('bg-gradient-to-br', 'from-blue-500', 'to-blue-600');
-		micButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-		micButton.style.boxShadow = "";
-	}
-});
-
 captureBtn.addEventListener('click', async () => {
 	try {
 		addMessage('user', 'Capturing screen...');
@@ -163,13 +134,13 @@ settingsButton.addEventListener('click', () => {
 	if (isActive) {
 		settingsModal.classList.remove('hidden');
 		settingsButton.classList.add('-translate-y-0.5', 'bg-opacity-20');
-		settingsInput.focus();
+		geminiKeyInput.focus();
 	} else {
 		closeModal();
 	}
 });
 
-settingsInput.addEventListener('input', (e) => {
+geminiKeyInput.addEventListener('input', (e) => {
 	e.stopPropagation();
 	const apiKey = e.target.value;
 	GEMINI_API_KEY = apiKey;
@@ -181,11 +152,8 @@ function closeModal() {
 	settingsButton.classList.remove('-translate-y-0.5');
 	settingsButton.classList.remove('bg-opacity-20');
 	settingsModal.classList.add('hidden');
-	settingsInput.value = '';
+	geminiKeyInput.value = '';
 }
-
-modalCloseBtn.addEventListener('click', closeModal);
-modalCancelBtn.addEventListener('click', closeModal);
 
 settingsModal.addEventListener('click', (e) => {
 	if (e.target === settingsModal) {
@@ -201,10 +169,94 @@ document.addEventListener('keydown', (e) => {
 
 settingsForm.addEventListener('submit', (e) => {
 	e.preventDefault();
-	const inputValue = settingsInput.value.trim();
+	const inputValue = geminiKeyInput.value.trim();
 
 	if (inputValue) {
 		console.log('Settings submitted:', inputValue);
 		closeModal();
 	}
 });
+
+async function toggleMic() {
+	const GROQ_API_KEY = groqKeyInput.value.trim();
+
+	if (!GROQ_API_KEY) {
+		addMessage("system", "Please set your GROQ API key in the settings.");
+		return;
+	}
+
+	if (!isRecording) {
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			mediaRecorder = new MediaRecorder(stream);
+
+			mediaRecorder.ondataavailable = event => {
+				audioChunks.push(event.data);
+			};
+
+			mediaRecorder.onstop = async () => {
+				const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+				audioChunks = [];
+
+				addMessage("user", "Transcribing audio...", false, true);
+
+				const formData = new FormData();
+				formData.append("file", audioBlob, "audio.wav");
+				formData.append("model", "whisper-large-v3-turbo");
+				formData.append("response_format", "verbose_json");
+
+				try {
+					const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+						method: "POST",
+						headers: {
+							"Authorization": `Bearer ${GROQ_API_KEY}`
+						},
+						body: formData
+					});
+
+					const data = await response.json();
+
+					const loaderMsg = document.getElementById("transcribing-msg");
+					if (loaderMsg) loaderMsg.remove();
+
+					addMessage("user", data.text);
+					showTypingIndicator();
+
+					const geminiResponse = await window.electronAPI.sendPrompt(data.text);
+					removeTypingIndicator();
+					addMessage("system", geminiResponse);
+
+				} catch (err) {
+					console.error(err);
+					addMessage("system", "Transcription failed: " + err.message);
+				}
+			};
+
+			mediaRecorder.start();
+
+			micButton.classList.remove('bg-gradient-to-br', 'from-blue-500', 'to-blue-600');
+			micButton.classList.add('bg-gradient-to-br', 'from-red-500', 'to-red-600');
+			micButton.innerHTML = '<i class="fa-solid fa-circle"></i>';
+			micButton.style.boxShadow = '0 0 15px red';
+			isRecording = true;
+
+		} catch (err) {
+			addMessage("system", "Could not access microphone.");
+			alert("Could not access microphone!");
+			console.error(err);
+		}
+	} else {
+		mediaRecorder.stop();
+		isRecording = false;
+
+		micButton.classList.remove('bg-gradient-to-br', 'from-red-500', 'to-red-600');
+		micButton.classList.add('bg-gradient-to-br', 'from-blue-500', 'to-blue-600');
+		micButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+		micButton.style.boxShadow = "";
+	}
+}
+
+
+micButton.addEventListener('click', toggleMic);
+modalCloseBtn.addEventListener('click', closeModal);
+modalCancelBtn.addEventListener('click', closeModal);
