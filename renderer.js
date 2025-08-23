@@ -5,7 +5,15 @@ const responseContent = document.getElementById('responseContent');
 const closeButton = document.getElementById('closeButton');
 const placeholder = document.getElementById('placeholder');
 const captureBtn = document.getElementById('captureBtn');
+const settingsButton = document.getElementById('settingsButton');
+const settingsModal = document.getElementById('settingsModal');
+const modalCloseBtn = document.getElementById('modalCloseBtn');
+const modalCancelBtn = document.getElementById('modalCancelBtn');
+const settingsForm = document.getElementById('settingsForm');
+const settingsInput = document.getElementById('settingsInput');
 const BACKEND_URL = "http://localhost:3000";
+let isActive = false;
+let GEMINI_API_KEY = '';
 
 function showTypingIndicator() {
 	const typingDiv = document.createElement('div');
@@ -96,11 +104,18 @@ micButton.addEventListener('click', async () => {
 	micButton.style.boxShadow = '0 0 15px red';
 
 	try {
-		const transcription = await window.electronAPI.startListen();
-		const userMessage = transcription.trim();
+		const transcriptionObj = await window.electronAPI.startListen();
+
+		const userMessage = transcriptionObj.micCommand?.trim() || '';
+
+		if (!userMessage) {
+			throw new Error('No transcription available');
+		}
+
 		removeTypingIndicator();
 		addMessage('user', userMessage);
 		showTypingIndicator();
+
 		try {
 			const reply = await window.electronAPI.sendPrompt(userMessage);
 			removeTypingIndicator();
@@ -130,7 +145,7 @@ captureBtn.addEventListener('click', async () => {
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({ path: filePath }),
+			body: JSON.stringify({ path: filePath, apiKey: GEMINI_API_KEY }),
 		})
 		const data = await response.json();
 		addMessage('system', data.response);
@@ -140,5 +155,56 @@ captureBtn.addEventListener('click', async () => {
 		alert('Failed to capture screen');
 	} finally {
 		removeTypingIndicator();
+	}
+});
+
+settingsButton.addEventListener('click', () => {
+	isActive = !isActive;
+	if (isActive) {
+		settingsModal.classList.remove('hidden');
+		settingsButton.classList.add('-translate-y-0.5', 'bg-opacity-20');
+		settingsInput.focus();
+	} else {
+		closeModal();
+	}
+});
+
+settingsInput.addEventListener('input', (e) => {
+	e.stopPropagation();
+	const apiKey = e.target.value;
+	GEMINI_API_KEY = apiKey;
+	window.electronAPI.setGeminiKey(apiKey);
+	console.log('GEMINI_API_KEY updated:', apiKey);
+});
+
+function closeModal() {
+	settingsButton.classList.remove('-translate-y-0.5');
+	settingsButton.classList.remove('bg-opacity-20');
+	settingsModal.classList.add('hidden');
+	settingsInput.value = '';
+}
+
+modalCloseBtn.addEventListener('click', closeModal);
+modalCancelBtn.addEventListener('click', closeModal);
+
+settingsModal.addEventListener('click', (e) => {
+	if (e.target === settingsModal) {
+		closeModal();
+	}
+});
+
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+		closeModal();
+	}
+});
+
+settingsForm.addEventListener('submit', (e) => {
+	e.preventDefault();
+	const inputValue = settingsInput.value.trim();
+
+	if (inputValue) {
+		console.log('Settings submitted:', inputValue);
+		closeModal();
 	}
 });

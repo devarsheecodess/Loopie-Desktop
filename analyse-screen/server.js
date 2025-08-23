@@ -6,14 +6,14 @@ app.use(express.json());
 const askGemini = require('../config/gemini').askGemini;
 
 app.post('/analyse', async (req, res) => {
-	const { path } = req.body;
+	const { path, apiKey } = req.body;
 
 	if (!fs.existsSync(path)) return res.status(400).json({ error: 'File not found' });
 
 	try {
 		const { data: { text } } = await Tesseract.recognize(path, 'eng');
 		const prompt = "Analyse the context of the screen based on the extracted text from the screen\n Extracted text: " + text;
-		const response = await askGemini(prompt);
+		const response = await askGemini(prompt, apiKey);
 		res.json({ response });
 	} catch (err) {
 		res.status(500).json({ error: err.message });

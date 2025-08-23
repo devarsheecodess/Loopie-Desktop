@@ -15,6 +15,7 @@
 
 <body class="bg-transparent w-full h-full font-sans">
 	<div class="flex flex-col mx-auto p-4 max-w-2xl h-full">
+		<!-- Controls -->
 		<div
 			class="flex justify-between items-center bg-black shadow-2xl backdrop-blur-xl mb-4 p-3 border border-white border-opacity-10 rounded-xl draggable">
 			<button id="micButton"
@@ -22,14 +23,14 @@
 				<i class="fa-solid fa-microphone"></i>
 			</button>
 			<input type="text" id="textInput" placeholder="Ask me anything..."
-				class="flex-1 bg-white bg-opacity-10 mx-4 px-4 py-2 border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all duration-200 no-drag placeholder-gray-300" />
+				class="flex-1 bg-white bg-opacity-10 mx-4 px-4 py-2 border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white text-sm transition-all duration-200 no-drag placeholder-gray-300" />
 			<div class="flex items-center space-x-2 no-drag">
 				<button id="captureBtn"
 					class="flex justify-center items-center bg-white bg-opacity-10 hover:bg-opacity-20 border border-white border-opacity-20 rounded-lg w-8 h-8 text-white transition-all hover:-translate-y-0.5 duration-200">
-					<i class="fa-solid fa-camera"></i>
+					<i class="fa-solid fa-eye"></i>
 				</button>
 
-				<button
+				<button id="settingsButton"
 					class="flex justify-center items-center bg-white bg-opacity-10 hover:bg-opacity-20 border border-white border-opacity-20 rounded-lg w-8 h-8 text-white transition-all hover:-translate-y-0.5 duration-200">
 					<i class="fa-solid fa-gear"></i>
 				</button>
@@ -41,10 +42,47 @@
 			</div>
 		</div>
 
+		<!-- Chat Area -->
 		<div class="flex-1 w-full min-h-0">
 			<div
 				class="bg-black bg-opacity-20 backdrop-blur-sm p-6 border border-white border-opacity-5 rounded-3xl h-full overflow-y-auto text-white text-opacity-90 scrollable-area">
 				<div id="responseContent"></div>
+			</div>
+		</div>
+
+		<!-- Settings Modal -->
+		<div id="settingsModal" class="hidden z-40 absolute inset-0 flex justify-center items-center mt-20">
+			<div
+				class="bg-gray-800 bg-opacity-95 shadow-2xl backdrop-blur-lg p-5 pt-2 border border-gray-700 border-opacity-50 rounded-2xl w-96 max-w-full">
+				<div class="flex justify-between items-center mb-4">
+					<h6 class="font-bold text-md text-white tracking-wide">Settings</h6>
+					<button id="modalCloseBtn"
+						class="hover:bg-gray-700 hover:bg-opacity-50 p-2 rounded-lg text-gray-400 hover:text-white transition-all duration-200">
+						<i class="text-sm fa-solid fa-x"></i>
+					</button>
+				</div>
+
+				<form id="settingsForm">
+					<div class="mb-6">
+						<label for="settingsInput" class="block mb-3 font-medium text-gray-200 text-sm tracking-wide">
+							Add API Key
+						</label>
+						<input type="text" id="settingsInput"
+							class="bg-gray-900 bg-opacity-60 shadow-inner backdrop-blur-sm px-4 py-2 border-2 border-gray-600 focus:border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-white text-sm transition-all duration-200 placeholder-gray-500"
+							placeholder="Enter your Gemini API key">
+					</div>
+
+					<div class="flex justify-end space-x-4 pt-2">
+						<button type="button" id="modalCancelBtn"
+							class="bg-gray-700 hover:bg-gray-600 bg-opacity-80 shadow-lg hover:shadow-xl px-4 py-2 border border-gray-600 border-opacity-50 rounded-xl font-medium text-gray-200 text-sm transition-all hover:-translate-y-0.5 duration-200">
+							Cancel
+						</button>
+						<button type="submit"
+							class="bg-gradient-to-r from-blue-600 hover:from-blue-500 to-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl px-4 py-2 border border-blue-500 border-opacity-30 rounded-xl font-medium text-white text-sm transition-all hover:-translate-y-0.5 duration-200">
+							Submit
+						</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>

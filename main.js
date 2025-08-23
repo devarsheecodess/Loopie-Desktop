@@ -3,10 +3,12 @@
 // });
 
 const { app, BrowserWindow, ipcMain } = require("electron");
-const path = require("path");
 const { askGemini } = require("./config/gemini.js");
 const { spawn } = require('child_process');
+const screenshot = require('screenshot-desktop');
+const path = require("path");
 const fs = require('fs')
+let GEMINI_API_KEY = "";
 let win;
 
 function createWindow() {
@@ -29,7 +31,7 @@ function createWindow() {
 
 ipcMain.handle("send-prompt", async (event, text) => {
 	try {
-		const reply = await askGemini(text);
+		const reply = await askGemini(text, GEMINI_API_KEY);
 		return reply;
 	} catch (err) {
 		console.error("Gemini error:", err);
@@ -53,7 +55,19 @@ ipcMain.handle('start-listen', async (event) => {
 
 		pythonProcess.on('close', (code) => {
 			if (code === 0) {
-				resolve(result.trim());
+				const lines = result.trim().split('\n');
+				let micCommand = '';
+				let deviceCommand = '';
+
+				lines.forEach(line => {
+					if (line.toLowerCase().startsWith('microphone command:')) {
+						micCommand = line.substring('microphone command:'.length).trim();
+					} else if (line.toLowerCase().startsWith('device audio command:')) {
+						deviceCommand = line.substring('device audio command:'.length).trim();
+					}
+				});
+
+				resolve({ micCommand, deviceCommand });
 			} else {
 				reject(new Error(`Python process exited with code ${code}`));
 			}
@@ -61,11 +75,6 @@ ipcMain.handle('start-listen', async (event) => {
 	});
 });
 
-app.whenReady().then(() => {
-	createWindow();
-});
-
-const screenshot = require('screenshot-desktop');
 ipcMain.handle('capture-screen', async () => {
 	try {
 		win.minimize();
@@ -89,3 +98,12 @@ ipcMain.handle('delete-context', async () => {
 		return { success: false, error: err.message };
 	}
 });
+
+ipcMain.on('set-gemini-key', (event, key) => {
+	GEMINI_API_KEY = key;
+	console.log('Updated GEMINI_API_KEY:', GEMINI_API_KEY);
+});
+
+ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);
+
+app.whenReady().then(() => { createWindow(); });

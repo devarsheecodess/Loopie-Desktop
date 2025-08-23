@@ -1,9 +1,7 @@
 const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-// --- Persistent context setup ---
 const contextFile = path.resolve(__dirname, '../geminiContext.json');
 
 let geminiContext = [];
@@ -22,23 +20,24 @@ const saveContext = () => {
 		console.error('Failed to save Gemini context file:', err);
 	}
 };
-// --- End of persistent context setup ---
 
-const askGemini = async (prompt) => {
-	// Add user prompt to context
+const askGemini = async (prompt, apiKey) => {
+	if (!apiKey) {
+		return 'Error: GEMINI API key not set.';
+	}
+
 	geminiContext.push({ role: 'user', text: prompt });
 
 	const ai = new GoogleGenAI({
-		apiKey: process.env.GEMINI_API_KEY,
+		apiKey,
 	});
 
 	const tools = [{ googleSearch: {} }];
 	const config = { thinkingConfig: { thinkingBudget: -1 }, tools };
 	const model = 'gemini-2.5-flash';
 
-	// Send the full context (user + model messages) to Gemini
 	const contents = geminiContext.map(msg => ({
-		role: msg.role, // "user" or "model"
+		role: msg.role,
 		parts: [{ text: msg.text }]
 	}));
 
@@ -53,16 +52,13 @@ const askGemini = async (prompt) => {
 		return 'Error: Failed to get response from Gemini.';
 	}
 
-	// Add AI reply to context
 	geminiContext.push({ role: 'model', text: output.trim() });
 
-	// Save full context to file
 	saveContext();
 
-	// Optional: trim to last 10 messages to prevent unbounded growth
 	if (geminiContext.length > 10) {
 		geminiContext = geminiContext.slice(-10);
-		saveContext(); // save trimmed context
+		saveContext();
 	}
 
 	return output.trim();
