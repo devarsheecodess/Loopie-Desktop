@@ -101,7 +101,7 @@ function closeModal() {
 }
 
 async function toggleMic() {
-	const GROQ_API_KEY = groqKeyInput.value.trim();
+	// const GROQ_API_KEY = groqKeyInput.value.trim();
 
 	if (!GROQ_API_KEY) {
 		addMessage("system", "Please set your GROQ API key in the settings.");
@@ -148,7 +148,6 @@ async function toggleMic() {
 					const geminiResponse = await window.electronAPI.sendPrompt(data.text);
 					removeTypingIndicator();
 					addMessage("system", geminiResponse);
-
 				} catch (err) {
 					console.error(err);
 					addMessage("system", "Transcription failed: " + err.message);

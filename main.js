@@ -51,7 +51,7 @@ function createWindow() {
 
 ipcMain.handle("send-prompt", async (event, text) => {
 	try {
-		const reply = await askGemini(text, GEMINI_API_KEY);
+		const reply = await askGemini(text, GEMINI_API_KEY || process.env.GEMINI_API_KEY);
 		return reply;
 	} catch (err) {
 		console.error("Gemini error:", err);
@@ -94,7 +94,7 @@ ipcMain.handle('delete-context', async () => {
 });
 
 ipcMain.on('set-gemini-key', (event, key) => {
-	GEMINI_API_KEY = key;
+	GEMINI_API_KEY = key || process.env.GEMINI_API_KEY;
 });
 
 ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);

@@ -1,4 +1,5 @@
 node_modules
 .env
 geminiContext.json
-analyse-screen/eng.traineddata
+credentials.json
+token.json
