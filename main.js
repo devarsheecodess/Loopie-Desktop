@@ -100,6 +100,7 @@ ipcMain.on('set-gemini-key', (event, key) => {
 ipcMain.handle('get-gemini-key', async () => GEMINI_API_KEY);
 
 app.whenReady().then(() => { createWindow(); });
+
 app.on('will-quit', () => {
 	globalShortcut.unregisterAll();
 	fs.unlinkSync(path.resolve(__dirname, './geminiContext.json'));

@@ -12,6 +12,9 @@ const modalCancelBtn = document.getElementById('modalCancelBtn');
 const settingsForm = document.getElementById('settingsForm');
 const geminiKeyInput = document.getElementById('geminiKeyInput');
 const groqKeyInput = document.getElementById('groqKeyInput');
+const calendarBtn = document.getElementById("calendarButton");
+const calendarPopover = document.getElementById("calendarPopover");
+const calendarInput = document.getElementById("calendarInput");
 const BACKEND_URL = "http://localhost:3000";
 let isActive = false;
 let GEMINI_API_KEY = '';
@@ -19,6 +22,17 @@ let GROQ_API_KEY = '';
 let isRecording = false;
 let mediaRecorder;
 let audioChunks = [];
+
+const calendar = flatpickr(calendarInput, {
+	inline: true,
+	dateFormat: "Y-m-d",
+	onChange: (selectedDates, dateStr) => {
+		console.log("Selected date:", dateStr);
+		document.getElementById("responseContent").innerHTML +=
+			`<p class="text-sm text-green-400">📅 ${dateStr}</p>`;
+		calendarPopover.classList.add("hidden");
+	}
+});
 
 function showTypingIndicator() {
 	const typingDiv = document.createElement('div');
@@ -98,6 +112,10 @@ function closeModal() {
 	settingsButton.classList.remove('bg-opacity-20');
 	settingsModal.classList.add('hidden');
 	geminiKeyInput.value = '';
+}
+
+function toggleCalendar() {
+	calendarPopover.classList.toggle("hidden");
 }
 
 async function toggleMic() {
@@ -267,3 +285,4 @@ settingsForm.addEventListener('submit', (e) => {
 micButton.addEventListener('click', toggleMic);
 modalCloseBtn.addEventListener('click', closeModal);
 modalCancelBtn.addEventListener('click', closeModal);
+calendarBtn.addEventListener("click", toggleCalendar);
